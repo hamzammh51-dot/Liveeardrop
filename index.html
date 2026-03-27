@@ -15,6 +15,7 @@
             --dark: #1F2937;
             --light: #F9FAFB;
             --card-bg: #FFFFFF;
+            --youtube: #FF0000;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -31,12 +32,16 @@
         .content-section.active { display: block; }
 
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .bonus-card { background: linear-gradient(135deg, #FFEDD5, #FFD6A5); border: 1px dashed #F59E0B; }
+        .bonus-card { border: 1px dashed #F59E0B; }
+        .tg-bonus { background: linear-gradient(135deg, #FFEDD5, #FFD6A5); }
+        .yt-bonus { background: linear-gradient(135deg, #fee2e2, #fecaca); border-color: var(--youtube); }
         
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--secondary); color: white; }
         .btn-telegram { background: #0088cc; color: white; }
+        .btn-youtube { background: var(--youtube); color: white; }
+        .btn-tutorial { background: #4B5563; color: white; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
 
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
@@ -63,15 +68,26 @@
                 <div class="balance-badge">
                     <i class="fas fa-wallet" style="margin-right:8px"></i> $<span id="balance">0.00</span>
                 </div>
+                <a href="https://youtu.be/XqFDhSQzNLI?si=X7fB3BICAY1M9GtW" target="_blank" class="btn btn-tutorial" style="margin-top: 15px; font-size: 0.9rem;">
+                    <i class="fab fa-youtube"></i> কীভাবে কাজ করবেন? ভিডিও দেখুন
+                </a>
             </div>
         </div>
 
         <div id="home" class="content-section active">
-            <div class="card bonus-card" id="telegramCard">
+            <div class="card bonus-card tg-bonus" id="telegramCard">
                 <h3 style="color: #9A3412;"><i class="fab fa-telegram"></i> $1.00 Join Bonus</h3>
                 <p style="font-size: 0.9rem; margin: 5px 0;">Join our channel and get $1.00 instantly!</p>
-                <a href="https://t.me/shohaginkamshop" target="_blank" class="btn btn-telegram" onclick="claimTelegramBonus()">
+                <a href="https://t.me/shohaginkamshop" target="_blank" class="btn btn-telegram" onclick="claimBonus('bonusClaimed', 1.00, 'telegramCard')">
                     Join Channel & Claim
+                </a>
+            </div>
+
+            <div class="card bonus-card yt-bonus" id="youtubeCard">
+                <h3 style="color: var(--youtube);"><i class="fab fa-youtube"></i> $1.00 Sub Bonus</h3>
+                <p style="font-size: 0.9rem; margin: 5px 0;">Subscribe to our YouTube & earn $1.00!</p>
+                <a href="https://www.youtube.com/@LiveEardrop" target="_blank" class="btn btn-youtube" onclick="claimBonus('ytBonusClaimed', 1.00, 'youtubeCard')">
+                    Subscribe & Claim
                 </a>
             </div>
 
@@ -87,7 +103,7 @@
         <div id="withdraw" class="content-section">
             <div class="card">
                 <h3>Withdraw</h3>
-                <p style="font-size: 0.8rem; color: #f44336; margin-bottom: 10px;">Minimum withdrawal: $5.00</p>
+                <p style="font-size: 0.8rem; color: #f44336; margin-bottom: 10px;">Minimum withdrawal: $20.00</p>
                 
                 <select id="method">
                     <option value="Bkash">Bkash</option>
@@ -95,7 +111,7 @@
                 </select>
 
                 <input type="number" id="phone" placeholder="Your Bkash/Nagad Number">
-                <input type="number" id="amount" placeholder="Amount (e.g. 5.00)">
+                <input type="number" id="amount" placeholder="Amount (Minimum 20.00)">
 
                 <button class="btn btn-success" id="withdrawBtn" onclick="processWithdraw()">Submit Request</button>
             </div>
@@ -120,19 +136,18 @@
         const BOT_TOKEN = '7347506024:AAFPsjDwDHusS5EWVWZjn3blDNDdfseTN3g';
         const ADMIN_ID = '5901407053';
 
-        // Load local storage balance and status
         window.onload = () => {
             const savedBalance = localStorage.getItem('userBalance');
-            const bonusClaimed = localStorage.getItem('bonusClaimed');
+            const tgClaimed = localStorage.getItem('bonusClaimed');
+            const ytClaimed = localStorage.getItem('ytBonusClaimed');
             
             if(savedBalance) {
                 balance = parseFloat(savedBalance);
                 document.getElementById('balance').textContent = balance.toFixed(2);
             }
             
-            if(bonusClaimed === 'true') {
-                document.getElementById('telegramCard').style.display = 'none';
-            }
+            if(tgClaimed === 'true') document.getElementById('telegramCard').style.display = 'none';
+            if(ytClaimed === 'true') document.getElementById('youtubeCard').style.display = 'none';
 
             if (window.Telegram && Telegram.WebApp) {
                 const user = Telegram.WebApp.initDataUnsafe.user;
@@ -150,18 +165,17 @@
             el.classList.add('active');
         }
 
-        function claimTelegramBonus() {
-            // Wait a bit to ensure user clicked the link
+        function claimBonus(storageKey, amount, cardId) {
             setTimeout(() => {
-                if(localStorage.getItem('bonusClaimed') !== 'true') {
-                    balance += 1.00;
+                if(localStorage.getItem(storageKey) !== 'true') {
+                    balance += amount;
                     localStorage.setItem('userBalance', balance);
-                    localStorage.setItem('bonusClaimed', 'true');
+                    localStorage.setItem(storageKey, 'true');
                     document.getElementById('balance').textContent = balance.toFixed(2);
-                    document.getElementById('telegramCard').style.display = 'none';
-                    msg("Congrats! $1.00 bonus added.");
+                    document.getElementById(cardId).style.display = 'none';
+                    msg(`Congrats! $${amount.toFixed(2)} bonus added.`);
                 }
-            }, 2000);
+            }, 3000);
         }
 
         function showAd() {
@@ -199,7 +213,7 @@
             const amount = parseFloat(document.getElementById('amount').value);
             const btn = document.getElementById('withdrawBtn');
 
-            if(amount < 5 || isNaN(amount)) return msg("Minimum $5 required!");
+            if(amount < 20 || isNaN(amount)) return msg("Minimum $20.00 required!");
             if(phone.length < 11) return msg("Valid phone number needed!");
             if(amount > balance) return msg("Insufficient Balance!");
 
